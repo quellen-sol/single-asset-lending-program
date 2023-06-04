@@ -87,11 +87,34 @@ pub mod single_asset_lending_program {
 
     user_state.total_borrows += amount;
     user_state.amount_to_repay +=
-      amount + calculate_interest(amount, ctx.accounts.vault_state_account.interest_rate);
+      amount + mul_u64_by_f32(amount, ctx.accounts.vault_state_account.interest_rate);
     Ok(())
   }
 
-  // pub fn repay(_ctx: Context<>) -> Result<()> {
-  //   Ok(())
-  // }
+  pub fn repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
+    let user_state = &mut ctx.accounts.user_state_account;
+
+    let part_for_rewards = mul_u64_by_f32(amount, ctx.accounts.vault_state_account.interest_rate); 
+    let part_for_vault = amount - part_for_rewards;
+
+    let vault_transfer_cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+      authority: ctx.accounts.payer.to_account_info(),
+      from: ctx.accounts.user_token_acccount.to_account_info(),
+      to: ctx.accounts.vault_account.to_account_info(),
+    });
+
+    transfer(vault_transfer_cpi, part_for_vault)?;
+
+    let rewards_transfer_cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+      authority: ctx.accounts.payer.to_account_info(),
+      from: ctx.accounts.user_token_acccount.to_account_info(),
+      to: ctx.accounts.vault_rewards_account.to_account_info(),
+    });
+
+    transfer(rewards_transfer_cpi, part_for_rewards)?;
+
+    user_state.amount_to_repay -= amount;
+    user_state.total_borrows -= amount;
+    Ok(())
+  }
 }

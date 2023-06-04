@@ -1,4 +1,4 @@
-pub fn calculate_interest(amount: u64, interest_rate: f32) -> u64 {
-  let to_repay = (amount as f64) * (interest_rate as f64);
-  to_repay as u64
+pub fn mul_u64_by_f32(a: u64, b: f32) -> u64 {
+  let result = (a as f64) * (b as f64);
+  result as u64
 }
