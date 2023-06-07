@@ -10,6 +10,7 @@ pub struct VaultState {
   pub total_deposits: u64,
   pub interest_rate: f32,
   pub borrow_percentage_per_user: f32,
+  pub reward_factor: u64,
 }
 
 impl VaultState {

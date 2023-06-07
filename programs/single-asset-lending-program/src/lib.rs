@@ -36,10 +36,11 @@ pub mod single_asset_lending_program {
     vault_state.total_deposits = 0;
     vault_state.borrow_percentage_per_user = max_borrow_percentage;
     vault_state.interest_rate = interest_rate;
+    vault_state.reward_factor = 1; // Avoid div by 0 in get_reward_ratio()
     Ok(())
   }
 
-  pub fn deposit_to_vault(ctx: Context<DepositToVault>, amount: u64) -> Result<()> {
+  pub fn deposit(ctx: Context<DepositToVault>, amount: u64) -> Result<()> {
     let user_state = &mut ctx.accounts.user_state_account;
     let vault_state = &mut ctx.accounts.vault_state_account;
 
@@ -56,6 +57,12 @@ pub mod single_asset_lending_program {
 
     user_state.total_deposits += amount;
     vault_state.total_deposits += amount;
+
+    let mut reward_ratio = get_reward_ratio(&vault_state);
+    if reward_ratio == 0 {
+      reward_ratio = 1;
+    }
+    vault_state.reward_factor += reward_ratio * amount;
     Ok(())
   }
 
@@ -94,22 +101,28 @@ pub mod single_asset_lending_program {
   pub fn repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
     let user_state = &mut ctx.accounts.user_state_account;
 
-    let part_for_rewards = mul_u64_by_f32(amount, ctx.accounts.vault_state_account.interest_rate); 
+    let part_for_rewards = mul_u64_by_f32(amount, ctx.accounts.vault_state_account.interest_rate);
     let part_for_vault = amount - part_for_rewards;
 
-    let vault_transfer_cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
-      authority: ctx.accounts.payer.to_account_info(),
-      from: ctx.accounts.user_token_acccount.to_account_info(),
-      to: ctx.accounts.vault_account.to_account_info(),
-    });
+    let vault_transfer_cpi = CpiContext::new(
+      ctx.accounts.token_program.to_account_info(),
+      Transfer {
+        authority: ctx.accounts.payer.to_account_info(),
+        from: ctx.accounts.user_token_acccount.to_account_info(),
+        to: ctx.accounts.vault_account.to_account_info(),
+      },
+    );
 
     transfer(vault_transfer_cpi, part_for_vault)?;
 
-    let rewards_transfer_cpi = CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
-      authority: ctx.accounts.payer.to_account_info(),
-      from: ctx.accounts.user_token_acccount.to_account_info(),
-      to: ctx.accounts.vault_rewards_account.to_account_info(),
-    });
+    let rewards_transfer_cpi = CpiContext::new(
+      ctx.accounts.token_program.to_account_info(),
+      Transfer {
+        authority: ctx.accounts.payer.to_account_info(),
+        from: ctx.accounts.user_token_acccount.to_account_info(),
+        to: ctx.accounts.vault_rewards_account.to_account_info(),
+      },
+    );
 
     transfer(rewards_transfer_cpi, part_for_rewards)?;
 

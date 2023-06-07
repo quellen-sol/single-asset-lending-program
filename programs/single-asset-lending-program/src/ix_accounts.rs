@@ -62,6 +62,12 @@ pub struct DepositToVault<'info> {
   ], bump)]
   pub user_state_account: Box<Account<'info, UserState>>,
 
+  #[account(mut, token::mint = vault_mint, seeds = [
+    VAULT_REWARDS_SEED.as_bytes(),
+    vault_account.key().as_ref(),
+  ], bump)]
+  pub vault_rewards_account: Account<'info, TokenAccount>,
+
   #[account(mut, token::mint = vault_mint)]
   pub user_token_account: Account<'info, TokenAccount>,
 
