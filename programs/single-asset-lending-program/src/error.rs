@@ -10,4 +10,7 @@ pub enum LendingError {
 
   #[msg("Attempt to borrow over maximum")]
   CannotBorrowOverMax,
+
+  #[msg("Cannot withdraw until all borrows are repaid")]
+  WithdrawWithBorrows,
 }
