@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-single_asset_lending_program = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+single_asset_lending_program = "F5dLpWLFYuEGEZZNf2RQt8sJnr5mzgpDhY3npuz8JggS"
 
 [registry]
 url = "https://api.apr.dev"

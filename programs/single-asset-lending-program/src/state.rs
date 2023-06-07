@@ -14,7 +14,7 @@ pub struct VaultState {
 }
 
 impl VaultState {
-  pub const SIZE: usize = 8 + 8 + 4 + 4;
+  pub const SIZE: usize = 8 + 8 + 4 + 4 + 8;
 }
 
 #[account]
